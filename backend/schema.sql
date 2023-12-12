@@ -1,3 +1,16 @@
+-- User Roles
+CREATE TABLE user_roles (
+  user_role_id SERIAL PRIMARY KEY,
+  role_name VARCHAR(255) NOT NULL
+);
+
+-- Permissions
+CREATE TABLE permissions (
+  permission_id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT
+);
+
 -- Users
 CREATE TABLE users (
   user_id SERIAL PRIMARY KEY,
@@ -12,24 +25,18 @@ CREATE TABLE users (
   user_role_id INT REFERENCES user_roles(user_role_id)
 );
 
--- User Roles
-CREATE TABLE user_roles (
-  user_role_id SERIAL PRIMARY KEY,
-  role_name VARCHAR(255) NOT NULL
-);
-
--- Permissions
-CREATE TABLE permissions (
-  permission_id SERIAL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  description TEXT
-);
-
 -- Role Permissions (junction table between user_roles and permissions)
 CREATE TABLE role_permissions (
   user_role_id INT REFERENCES user_roles(user_role_id),
   permission_id INT REFERENCES permissions(permission_id),
   PRIMARY KEY (user_role_id, permission_id)
+);
+
+-- Categories
+CREATE TABLE categories (
+  category_id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT
 );
 
 -- Posts
@@ -41,7 +48,7 @@ CREATE TABLE posts (
   user_id INT REFERENCES users(user_id),
   is_sticky BOOLEAN DEFAULT FALSE,
   is_locked BOOLEAN DEFAULT FALSE,
-  post_category_id INT /* REFERENCES categories(category_id) if the 'Category' table is created */,
+  post_category_id INT REFERENCES categories(category_id),
   additional_notes TEXT
 );
 
@@ -134,10 +141,3 @@ CREATE TABLE bookmarks (
   user_id INT REFERENCES users(user_id),
   post_id INT REFERENCES posts(post_id)
 );
-
--- Categories (optional)
--- CREATE TABLE categories (
---   category_id SERIAL PRIMARY KEY,
---   name VARCHAR(255) NOT NULL,
---   description TEXT
--- );
