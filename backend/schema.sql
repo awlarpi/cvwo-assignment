@@ -1,158 +1,143 @@
--- Users table
-CREATE TABLE Users (
-    UserID INT PRIMARY KEY AUTO_INCREMENT,
-    Username VARCHAR(50) UNIQUE NOT NULL,
-    Email VARCHAR(255) UNIQUE NOT NULL,
-    PasswordHash VARCHAR(255) NOT NULL,
-    RegistrationDate DATETIME NOT NULL,
-    ProfilePicture VARCHAR(255),
-    Biography TEXT,
-    LastLoginDate DATETIME,
-    IsActive BOOLEAN NOT NULL,
-    UserRoleID INT,
-    FOREIGN KEY (UserRoleID) REFERENCES UserRoles(UserRoleID)
+-- Users
+CREATE TABLE users (
+  user_id SERIAL PRIMARY KEY,
+  username VARCHAR(255) UNIQUE NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  registration_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  profile_picture TEXT,
+  biography TEXT,
+  last_login_date TIMESTAMP WITH TIME ZONE,
+  is_active BOOLEAN DEFAULT TRUE,
+  user_role_id INT REFERENCES user_roles(user_role_id)
 );
 
--- Posts table
-CREATE TABLE Posts (
-    PostID INT PRIMARY KEY AUTO_INCREMENT,
-    Title VARCHAR(255) NOT NULL,
-    Content TEXT NOT NULL,
-    CreationDate DATETIME NOT NULL,
-    UserID INT,
-    IsSticky BOOLEAN NOT NULL,
-    IsLocked BOOLEAN NOT NULL,
-    PostCategoryID INT,
-    AdditionalNotes TEXT,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID),
-    FOREIGN KEY (PostCategoryID) REFERENCES Categories(CategoryID)
+-- User Roles
+CREATE TABLE user_roles (
+  user_role_id SERIAL PRIMARY KEY,
+  role_name VARCHAR(255) NOT NULL
 );
 
--- Comments table
-CREATE TABLE Comments (
-    CommentID INT PRIMARY KEY AUTO_INCREMENT,
-    Content TEXT NOT NULL,
-    CreationDate DATETIME NOT NULL,
-    PostID INT,
-    UserID INT,
-    FOREIGN KEY (PostID) REFERENCES Posts(PostID),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+-- Permissions
+CREATE TABLE permissions (
+  permission_id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT
 );
 
--- Routes table
-CREATE TABLE Routes (
-    RouteID INT PRIMARY KEY AUTO_INCREMENT,
-    Name VARCHAR(255) NOT NULL,
-    Description TEXT,
-    StartLocation VARCHAR(255) NOT NULL,
-    EndLocation VARCHAR(255) NOT NULL,
-    Distance FLOAT NOT NULL,
-    ElevationGain INT,
-    RouteMapLink VARCHAR(255),
-    UserID INT,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+-- Role Permissions (junction table between user_roles and permissions)
+CREATE TABLE role_permissions (
+  user_role_id INT REFERENCES user_roles(user_role_id),
+  permission_id INT REFERENCES permissions(permission_id),
+  PRIMARY KEY (user_role_id, permission_id)
 );
 
--- Events table
-CREATE TABLE Events (
-    EventID INT PRIMARY KEY AUTO_INCREMENT,
-    Title VARCHAR(255) NOT NULL,
-    Description TEXT,
-    EventDate DATETIME NOT NULL,
-    MeetingPoint VARCHAR(255) NOT NULL,
-    RouteID INT,
-    CreatorUserID INT,
-    FOREIGN KEY (RouteID) REFERENCES Routes(RouteID),
-    FOREIGN KEY (CreatorUserID) REFERENCES Users(UserID)
+-- Posts
+CREATE TABLE posts (
+  post_id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  creation_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  user_id INT REFERENCES users(user_id),
+  is_sticky BOOLEAN DEFAULT FALSE,
+  is_locked BOOLEAN DEFAULT FALSE,
+  post_category_id INT /* REFERENCES categories(category_id) if the 'Category' table is created */,
+  additional_notes TEXT
 );
 
--- RSVPs table
-CREATE TABLE RSVPs (
-    RSVPID INT PRIMARY KEY AUTO_INCREMENT,
-    EventID INT,
-    UserID INT,
-    RSVPStatus VARCHAR(50) NOT NULL,
-    RSVPDate DATETIME NOT NULL,
-    FOREIGN KEY (EventID) REFERENCES Events(EventID),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+-- Comments
+CREATE TABLE comments (
+  comment_id SERIAL PRIMARY KEY,
+  content TEXT NOT NULL,
+  creation_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  post_id INT REFERENCES posts(post_id),
+  user_id INT REFERENCES users(user_id)
 );
 
--- Categories table (optional)
-CREATE TABLE Categories (
-    CategoryID INT PRIMARY KEY AUTO_INCREMENT,
-    Name VARCHAR(50) NOT NULL,
-    Description TEXT
+-- Routes
+CREATE TABLE routes (
+  route_id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  start_location TEXT NOT NULL,
+  end_location TEXT NOT NULL,
+  distance FLOAT,
+  elevation_gain INT,
+  route_map_link TEXT,
+  user_id INT REFERENCES users(user_id)
 );
 
--- UserRoles table
-CREATE TABLE UserRoles (
-    UserRoleID INT PRIMARY KEY AUTO_INCREMENT,
-    RoleName VARCHAR(50) NOT NULL
+-- Events
+CREATE TABLE events (
+  event_id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  event_date TIMESTAMP WITH TIME ZONE NOT NULL,
+  meeting_point TEXT NOT NULL,
+  route_id INT REFERENCES routes(route_id),
+  creator_user_id INT REFERENCES users(user_id)
 );
 
--- Permissions table
-CREATE TABLE Permissions (
-    PermissionID INT PRIMARY KEY AUTO_INCREMENT,
-    Name VARCHAR(50) NOT NULL,
-    Description TEXT,
-    UserRoleID INT,
-    FOREIGN KEY (UserRoleID) REFERENCES UserRoles(UserRoleID)
+-- RSVPs
+CREATE TABLE rsvps (
+  rsvp_id SERIAL PRIMARY KEY,
+  event_id INT REFERENCES events(event_id),
+  user_id INT REFERENCES users(user_id),
+  rsvp_status VARCHAR(255) NOT NULL,
+  rsvp_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- PrivateMessages table
-CREATE TABLE PrivateMessages (
-    MessageID INT PRIMARY KEY AUTO_INCREMENT,
-    Content TEXT NOT NULL,
-    SenderUserID INT,
-    ReceiverUserID INT,
-    SentDate DATETIME NOT NULL,
-    IsRead BOOLEAN NOT NULL,
-    FOREIGN KEY (SenderUserID) REFERENCES Users(UserID),
-    FOREIGN KEY (ReceiverUserID) REFERENCES Users(UserID)
+-- Private Messages
+CREATE TABLE private_messages (
+  message_id SERIAL PRIMARY KEY,
+  content TEXT NOT NULL,
+  sender_user_id INT REFERENCES users(user_id),
+  receiver_user_id INT REFERENCES users(user_id),
+  sent_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  is_read BOOLEAN DEFAULT FALSE
 );
 
--- ForumModerationLog table
-CREATE TABLE ForumModerationLog (
-    LogID INT PRIMARY KEY AUTO_INCREMENT,
-    Action VARCHAR(255) NOT NULL,
-    ActionDate DATETIME NOT NULL,
-    ModeratorUserID INT,
-    AffectedUserID INT,
-    PostID INT,
-    CommentID INT,
-    Reason TEXT,
-    FOREIGN KEY (ModeratorUserID) REFERENCES Users(UserID),
-    FOREIGN KEY (AffectedUserID) REFERENCES Users(UserID),
-    FOREIGN KEY (PostID) REFERENCES Posts(PostID),
-    FOREIGN KEY (CommentID) REFERENCES Comments(CommentID)
+-- Forum Moderation Log
+CREATE TABLE forum_moderation_log (
+  log_id SERIAL PRIMARY KEY,
+  action VARCHAR(255) NOT NULL,
+  action_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  moderator_user_id INT REFERENCES users(user_id),
+  affected_user_id INT REFERENCES users(user_id),
+  post_id INT REFERENCES posts(post_id),
+  comment_id INT REFERENCES comments(comment_id),
+  reason TEXT
 );
 
--- UserSessions table
-CREATE TABLE UserSessions (
-    SessionID INT PRIMARY KEY AUTO_INCREMENT,
-    UserID INT,
-    CreationDate DATETIME NOT NULL,
-    ExpiryDate DATETIME NOT NULL,
-    IPAddress VARCHAR(50),
-    UserAgent VARCHAR(255),
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+-- User Sessions
+CREATE TABLE user_sessions (
+  session_id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(user_id),
+  creation_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  expiry_date TIMESTAMP WITH TIME ZONE,
+  ip_address INET,
+  user_agent TEXT
 );
 
--- Notifications table
-CREATE TABLE Notifications (
-    NotificationID INT PRIMARY KEY AUTO_INCREMENT,
-    UserID INT,
-    Content TEXT NOT NULL,
-    CreationDate DATETIME NOT NULL,
-    IsRead BOOLEAN NOT NULL,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+-- Notifications
+CREATE TABLE notifications (
+  notification_id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(user_id),
+  content TEXT NOT NULL,
+  creation_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  is_read BOOLEAN DEFAULT FALSE
 );
 
--- Bookmarks table
-CREATE TABLE Bookmarks (
-    BookmarkID INT PRIMARY KEY AUTO_INCREMENT,
-    UserID INT,
-    PostID INT,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID),
-    FOREIGN KEY (PostID) REFERENCES Posts(PostID)
+-- Bookmarks
+CREATE TABLE bookmarks (
+  bookmark_id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(user_id),
+  post_id INT REFERENCES posts(post_id)
 );
+
+-- Categories (optional)
+-- CREATE TABLE categories (
+--   category_id SERIAL PRIMARY KEY,
+--   name VARCHAR(255) NOT NULL,
+--   description TEXT
+-- );
