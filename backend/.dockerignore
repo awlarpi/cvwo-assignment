@@ -1,0 +1,31 @@
+# Ignore Go build files
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Ignore test and coverage files
+*.test
+*.test.cache
+coverage.txt
+
+# Ignore git files
+.git
+.gitignore
+
+# Ignore logs
+logs
+
+# Ignore IDE specific files
+.idea
+*.swp
+*.swo
+.vscode/
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore vendor directory
+vendor/
