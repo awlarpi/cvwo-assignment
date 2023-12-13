@@ -1,6 +1,6 @@
 -- User Roles
-CREATE TABLE user_roles (
-  user_role_id SERIAL PRIMARY KEY,
+CREATE TABLE roles (
+  role_id SERIAL PRIMARY KEY,
   role_name VARCHAR(255) NOT NULL
 );
 
@@ -9,6 +9,13 @@ CREATE TABLE permissions (
   permission_id SERIAL PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   description TEXT
+);
+
+-- Role Permissions (junction table between roles and permissions)
+CREATE TABLE role_permissions (
+  role_id INT REFERENCES roles(role_id),
+  permission_id INT REFERENCES permissions(permission_id),
+  PRIMARY KEY (role_id, permission_id)
 );
 
 -- Users
@@ -22,14 +29,7 @@ CREATE TABLE users (
   biography TEXT,
   last_login_date TIMESTAMP WITH TIME ZONE,
   is_active BOOLEAN DEFAULT TRUE,
-  user_role_id INT REFERENCES user_roles(user_role_id)
-);
-
--- Role Permissions (junction table between user_roles and permissions)
-CREATE TABLE role_permissions (
-  user_role_id INT REFERENCES user_roles(user_role_id),
-  permission_id INT REFERENCES permissions(permission_id),
-  PRIMARY KEY (user_role_id, permission_id)
+  role_id INT REFERENCES roles(role_id)
 );
 
 -- Categories
@@ -116,9 +116,8 @@ CREATE TABLE forum_moderation_log (
   reason TEXT
 );
 
--- User Sessions
 CREATE TABLE user_sessions (
-  session_id SERIAL PRIMARY KEY,
+  session_id UUID PRIMARY KEY,
   user_id INT REFERENCES users(user_id),
   creation_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   expiry_date TIMESTAMP WITH TIME ZONE,
@@ -141,3 +140,23 @@ CREATE TABLE bookmarks (
   user_id INT REFERENCES users(user_id),
   post_id INT REFERENCES posts(post_id)
 );
+
+------------------------------------------------------------------------------------------------------------------------
+
+INSERT INTO roles (role_name) VALUES ('superadmin');
+INSERT INTO roles (role_name) VALUES ('admin');
+INSERT INTO roles (role_name) VALUES ('moderator');
+INSERT INTO roles (role_name) VALUES ('user');
+INSERT INTO roles (role_name) VALUES ('guest');
+
+-- {
+--     "Username": "testUser",
+--     "Email": "testUser@example.com",
+--     "Password": "testPassword",
+--     "ProfilePicture": "https://example.com/profile.jpg",
+--     "Biography": "This is a test user",
+--     "RoleID": 1
+-- }
+
+INSERT INTO users (username, email, password_hash, profile_picture, biography, role_id) 
+VALUES ('testUser', 'testUser@testUser@example.com', '$2a$10$sT4z5AHcw5CqATcCBIklqeSKNnW1XVnaQQ9KBCEdL0Q5DGbJoDnU2', 'https://example.com/profile.jpg', 'This is a test user', 1);

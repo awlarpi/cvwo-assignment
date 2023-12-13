@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"server/db"
 	"server/handlers"
 
 	"github.com/gin-gonic/gin"
@@ -23,24 +24,33 @@ func main() {
 	defer dbpool.Close()
 
 	r := gin.Default()
-	// queries := db.New(dbpool)
+	queries := db.New(dbpool)
 
 	h := handlers.Handler{
-		Log: log,
+		Ctx:     &ctx,
+		Log:     log,
+		Queries: queries,
 	}
 
 	api := r.Group("/api")
 	{
 		api.GET("/ping", h.Ping)
-		api.POST("/login", h.Login)
 
-		protected := api.Group("/protected")
-		protected.Use(h.AuthRequired)
+		users := api.Group("/users")
 		{
-			protected.GET("/test", h.Protected)
+			users.POST("/login", h.Login)
+			users.POST("/", h.UAC("CreateUser"), h.CreateUser)
+			users.GET("/", h.AuthenticateUser(), h.UAC("GetAllUsers"), h.GetAllUsers)
+			users.GET("/:id", h.UAC("GetUser"), h.GetUser)
+			users.PUT("/:id", h.UAC("UpdateUserExcludingSensitive"), h.UpdateUserExcludingSensitive)
+			users.DELETE("/:id", h.UAC("DeleteUser"), h.DeleteUser)
+			users.PUT("/:id/deactivate", h.UAC("DeactivateUser"), h.DeactivateUser)
+			users.PUT("/:id/activate", h.UAC("ActivateUser"), h.ActivateUser)
+			users.PUT("/password", h.UAC("UpdateUserPassword"), h.UpdateUserPassword)
+			users.PUT("/role", h.UAC("UpdateUserRole"), h.UpdateUserRole)
 		}
-	}
 
-	log.Info("Server running on port 8081")
-	r.Run(":8081")
+		log.Info("Server running on port 8081")
+		r.Run(":8081")
+	}
 }
