@@ -7,6 +7,13 @@ VALUES ($1, $2, $3, $4, $5, $6);
 -- Get a user by id, no password_hash
 SELECT user_id, username, email, registration_date, profile_picture, biography, last_login_date, is_active, role_id FROM users WHERE user_id = $1;
 
+-- name: GetUserWithRoleName :one
+-- Get a user by id, no password_hash, with role_name
+SELECT users.user_id, users.username, users.email, users.registration_date, users.profile_picture, users.biography, users.last_login_date, users.is_active, users.role_id, roles.role_name
+FROM users
+INNER JOIN roles ON users.role_id = roles.role_id
+WHERE users.user_id = $1;
+
 -- name: GetAllUsers :many
 -- Get all users, no password_hash
 SELECT user_id, username, email, registration_date, profile_picture, biography, last_login_date, is_active, role_id FROM users;
@@ -71,62 +78,6 @@ SELECT * FROM roles;
 
 ------------------------------------------------------------------------------------------------------------------------
 
--- name: CreatePermission :exec
--- Create a new permission
-INSERT INTO permissions (name, description)
-VALUES ($1, $2);
-
--- name: GetPermission :one
--- Get a permission by id
-SELECT * FROM permissions WHERE permission_id = $1;
-
--- name: GetAllPermissions :many
--- Get all permissions
-SELECT * FROM permissions;
-
--- name: UpdatePermission :exec
--- Update a permission by id
-UPDATE permissions SET name = $1, description = $2 WHERE permission_id = $3;
-
--- name: DeletePermission :exec
--- Delete a permission by id
-DELETE FROM permissions WHERE permission_id = $1;
-
--- name: FetchPermissionNamesForRole :many
-SELECT permissions.name
-FROM permissions
-JOIN role_permissions ON permissions.permission_id = role_permissions.permission_id
-WHERE role_permissions.role_id = $1;
-
-------------------------------------------------------------------------------------------------------------------------
-
--- name: CreateRolePermission :exec
--- Create a new role permission
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES ($1, $2);
-
--- name: GetRolePermission :one
--- Get a specific role permission
-SELECT * FROM role_permissions
-WHERE role_id = $1 AND permission_id = $2;
-
--- name: ListRolePermissions :many
--- Get all role permissions
-SELECT * FROM role_permissions;
-
--- name: UpdateRolePermission :exec
--- Update a specific role permission
-UPDATE role_permissions
-SET role_id = $1, permission_id = $2
-WHERE role_id = $3 AND permission_id = $4;
-
--- name: DeleteRolePermission :exec
--- Delete a specific role permission
-DELETE FROM role_permissions
-WHERE role_id = $1 AND permission_id = $2;
-
-------------------------------------------------------------------------------------------------------------------------
-
 -- name: CreateCategory :exec
 -- Create a new category
 INSERT INTO categories (name, description)
@@ -171,6 +122,9 @@ UPDATE posts SET title = $2, content = $3, user_id = $4, post_category_id = $5, 
 
 -- name: DeletePost :exec
 DELETE FROM posts WHERE post_id = $1;
+
+-- name: DeletePostByPostIdAndUserId :exec
+DELETE FROM posts WHERE post_id = $1 AND user_id = $2;
 
 -- name: GetStickyPosts :many
 SELECT * FROM posts WHERE is_sticky = TRUE ORDER BY creation_date DESC;
@@ -219,9 +173,17 @@ INSERT INTO comments (content, post_id, user_id) VALUES ($1, $2, $3) RETURNING *
 -- Update a comment's content
 UPDATE comments SET content = $2 WHERE comment_id = $1 RETURNING *;
 
+-- name: UpdateCommentByCommentIdAndUserId :one
+-- Update a comment's content by its ID and the ID of the user who made it
+UPDATE comments SET content = $3 WHERE comment_id = $1 AND user_id = $2 RETURNING *;
+
 -- name: DeleteComment :exec
 -- Delete a comment by its ID
 DELETE FROM comments WHERE comment_id = $1;
+
+-- name: DeleteCommentByCommentIdAndUserId :exec
+-- Delete a comment by its ID and the ID of the user who made it
+DELETE FROM comments WHERE comment_id = $1 AND user_id = $2;
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -436,6 +398,14 @@ SELECT * FROM forum_moderation_log WHERE reason = $1;
 -- Get a single user session by session_id
 SELECT * FROM user_sessions WHERE session_id = $1;
 
+-- name: GetUserSessionAndRoleName :one
+-- Get a single user session by session_id, with role_name
+SELECT user_sessions.session_id, user_sessions.user_id, user_sessions.expiry_date, user_sessions.ip_address, user_sessions.user_agent, user_sessions.creation_date, users.role_id, roles.role_name
+FROM user_sessions
+INNER JOIN users ON user_sessions.user_id = users.user_id
+INNER JOIN roles ON users.role_id = roles.role_id
+WHERE session_id = $1;
+
 -- name: GetUserSessionsByUserId :many
 -- Get all sessions for a specific user_id
 SELECT * FROM user_sessions WHERE user_id = $1;
@@ -468,6 +438,10 @@ SELECT * FROM user_sessions ORDER BY creation_date;
 -- name: GetUserSessionsFilteredByDate :many
 -- Get all user sessions after a specific date
 SELECT * FROM user_sessions WHERE creation_date > $1;
+
+-- name: InvalidateUserSession :exec
+-- Invalidate a user session by setting the expiry_date to a past date
+UPDATE user_sessions SET expiry_date = TIMESTAMP '1970-01-01 00:00:00' WHERE session_id = $1;
 
 ------------------------------------------------------------------------------------------------------------------------
 

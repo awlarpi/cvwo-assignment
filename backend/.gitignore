@@ -33,3 +33,6 @@ Thumbs.db
 bin/
 
 sqlc.yaml
+
+main
+main.exe

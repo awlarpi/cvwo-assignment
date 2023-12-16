@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"server/db"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -40,7 +42,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		RoleID:         pgtype.Int4{Int32: int32(inputAPI.RoleID), Valid: true},
 	}
 
-	err = h.Queries.CreateUser(*h.Ctx, inputDB)
+	err = h.Queries.CreateUser(context.Background(), inputDB)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -50,12 +52,13 @@ func (h *Handler) CreateUser(c *gin.Context) {
 }
 
 func (h *Handler) GetUser(c *gin.Context) {
-	var userID int32
-	if err := c.ShouldBindUri(&userID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	userID := c.Param("id")
+	userIDInt, err := strconv.ParseInt(userID, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
-	user, err := h.Queries.GetUser(*h.Ctx, userID)
+	user, err := h.Queries.GetUser(context.Background(), int32(userIDInt))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -64,7 +67,7 @@ func (h *Handler) GetUser(c *gin.Context) {
 }
 
 func (h *Handler) GetAllUsers(c *gin.Context) {
-	users, err := h.Queries.GetAllUsers(*h.Ctx)
+	users, err := h.Queries.GetAllUsers(context.Background())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -72,14 +75,34 @@ func (h *Handler) GetAllUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
-// update user excluding password
+type UpdateUserExcludingSensitiveAPIParams struct {
+	UserID         int32
+	Username       string
+	Email          string
+	ProfilePicture string
+	Biography      string
+}
+
 func (h *Handler) UpdateUserExcludingSensitive(c *gin.Context) {
-	var input db.UpdateUserExcludingSensitiveParams
+	var input UpdateUserExcludingSensitiveAPIParams
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err := h.Queries.UpdateUserExcludingSensitive(*h.Ctx, input)
+
+	if !h.validateUserID(c, input.UserID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	dbInput := db.UpdateUserExcludingSensitiveParams{
+		UserID:         input.UserID,
+		Username:       input.Username,
+		Email:          input.Email,
+		ProfilePicture: pgtype.Text{String: input.ProfilePicture, Valid: true},
+		Biography:      pgtype.Text{String: input.Biography, Valid: true},
+	}
+	err := h.Queries.UpdateUserExcludingSensitive(context.Background(), dbInput)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -87,10 +110,20 @@ func (h *Handler) UpdateUserExcludingSensitive(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User updated"})
 }
 
+type UpdateUserPasswordAPIParams struct {
+	UserID       int32
+	PasswordHash string
+}
+
 func (h *Handler) UpdateUserPassword(c *gin.Context) {
-	var input db.UpdateUserPasswordParams
+	var input UpdateUserPasswordAPIParams
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if !h.validateUserID(c, input.UserID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized"})
 		return
 	}
 
@@ -102,7 +135,12 @@ func (h *Handler) UpdateUserPassword(c *gin.Context) {
 
 	input.PasswordHash = hashedPassword
 
-	err = h.Queries.UpdateUserPassword(*h.Ctx, input)
+	dbInput := db.UpdateUserPasswordParams{
+		UserID:       input.UserID,
+		PasswordHash: input.PasswordHash,
+	}
+
+	err = h.Queries.UpdateUserPassword(context.Background(), dbInput)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -110,58 +148,22 @@ func (h *Handler) UpdateUserPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User password updated"})
 }
 
-func (h *Handler) UpdateUserRole(c *gin.Context) {
-	var input db.UpdateUserRoleParams
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	err := h.Queries.UpdateUserRole(*h.Ctx, input)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "User role updated"})
-}
-
 func (h *Handler) DeleteUser(c *gin.Context) {
-	var userID int32
-	if err := c.ShouldBindUri(&userID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
-	err := h.Queries.DeleteUser(*h.Ctx, userID)
+
+	if !h.validateUserID(c, int32(userID)) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	err = h.Queries.DeleteUser(context.Background(), int32(userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted"})
-}
-
-func (h *Handler) DeactivateUser(c *gin.Context) {
-	var userID int32
-	if err := c.ShouldBindUri(&userID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	err := h.Queries.DeactivateUser(*h.Ctx, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "User deactivated"})
-}
-
-func (h *Handler) ActivateUser(c *gin.Context) {
-	var userID int32
-	if err := c.ShouldBindUri(&userID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	err := h.Queries.ActivateUser(*h.Ctx, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "User activated"})
 }

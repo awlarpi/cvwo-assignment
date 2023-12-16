@@ -136,24 +136,6 @@ func (q *Queries) CreateLog(ctx context.Context, arg CreateLogParams) error {
 	return err
 }
 
-const createPermission = `-- name: CreatePermission :exec
-
-INSERT INTO permissions (name, description)
-VALUES ($1, $2)
-`
-
-type CreatePermissionParams struct {
-	Name        string
-	Description pgtype.Text
-}
-
-// ----------------------------------------------------------------------------------------------------------------------
-// Create a new permission
-func (q *Queries) CreatePermission(ctx context.Context, arg CreatePermissionParams) error {
-	_, err := q.db.Exec(ctx, createPermission, arg.Name, arg.Description)
-	return err
-}
-
 const createPost = `-- name: CreatePost :exec
 
 INSERT INTO posts (title, content, user_id, post_category_id, additional_notes)
@@ -223,24 +205,6 @@ INSERT INTO roles (role_name) VALUES ($1)
 // Create a new role
 func (q *Queries) CreateRole(ctx context.Context, roleName string) error {
 	_, err := q.db.Exec(ctx, createRole, roleName)
-	return err
-}
-
-const createRolePermission = `-- name: CreateRolePermission :exec
-
-INSERT INTO role_permissions (role_id, permission_id)
-VALUES ($1, $2)
-`
-
-type CreateRolePermissionParams struct {
-	RoleID       int32
-	PermissionID int32
-}
-
-// ----------------------------------------------------------------------------------------------------------------------
-// Create a new role permission
-func (q *Queries) CreateRolePermission(ctx context.Context, arg CreateRolePermissionParams) error {
-	_, err := q.db.Exec(ctx, createRolePermission, arg.RoleID, arg.PermissionID)
 	return err
 }
 
@@ -386,6 +350,21 @@ func (q *Queries) DeleteComment(ctx context.Context, commentID int32) error {
 	return err
 }
 
+const deleteCommentByCommentIdAndUserId = `-- name: DeleteCommentByCommentIdAndUserId :exec
+DELETE FROM comments WHERE comment_id = $1 AND user_id = $2
+`
+
+type DeleteCommentByCommentIdAndUserIdParams struct {
+	CommentID int32
+	UserID    pgtype.Int4
+}
+
+// Delete a comment by its ID and the ID of the user who made it
+func (q *Queries) DeleteCommentByCommentIdAndUserId(ctx context.Context, arg DeleteCommentByCommentIdAndUserIdParams) error {
+	_, err := q.db.Exec(ctx, deleteCommentByCommentIdAndUserId, arg.CommentID, arg.UserID)
+	return err
+}
+
 const deleteEvent = `-- name: DeleteEvent :exec
 DELETE FROM events WHERE event_id = $1
 `
@@ -405,22 +384,26 @@ func (q *Queries) DeleteLog(ctx context.Context, logID int32) error {
 	return err
 }
 
-const deletePermission = `-- name: DeletePermission :exec
-DELETE FROM permissions WHERE permission_id = $1
-`
-
-// Delete a permission by id
-func (q *Queries) DeletePermission(ctx context.Context, permissionID int32) error {
-	_, err := q.db.Exec(ctx, deletePermission, permissionID)
-	return err
-}
-
 const deletePost = `-- name: DeletePost :exec
 DELETE FROM posts WHERE post_id = $1
 `
 
 func (q *Queries) DeletePost(ctx context.Context, postID int32) error {
 	_, err := q.db.Exec(ctx, deletePost, postID)
+	return err
+}
+
+const deletePostByPostIdAndUserId = `-- name: DeletePostByPostIdAndUserId :exec
+DELETE FROM posts WHERE post_id = $1 AND user_id = $2
+`
+
+type DeletePostByPostIdAndUserIdParams struct {
+	PostID int32
+	UserID pgtype.Int4
+}
+
+func (q *Queries) DeletePostByPostIdAndUserId(ctx context.Context, arg DeletePostByPostIdAndUserIdParams) error {
+	_, err := q.db.Exec(ctx, deletePostByPostIdAndUserId, arg.PostID, arg.UserID)
 	return err
 }
 
@@ -489,22 +472,6 @@ func (q *Queries) DeleteRole(ctx context.Context, roleID int32) error {
 	return err
 }
 
-const deleteRolePermission = `-- name: DeleteRolePermission :exec
-DELETE FROM role_permissions
-WHERE role_id = $1 AND permission_id = $2
-`
-
-type DeleteRolePermissionParams struct {
-	RoleID       int32
-	PermissionID int32
-}
-
-// Delete a specific role permission
-func (q *Queries) DeleteRolePermission(ctx context.Context, arg DeleteRolePermissionParams) error {
-	_, err := q.db.Exec(ctx, deleteRolePermission, arg.RoleID, arg.PermissionID)
-	return err
-}
-
 const deleteRoute = `-- name: DeleteRoute :exec
 DELETE FROM routes WHERE route_id = $1
 `
@@ -533,33 +500,6 @@ DELETE FROM user_sessions WHERE session_id = $1
 func (q *Queries) DeleteUserSession(ctx context.Context, sessionID pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, deleteUserSession, sessionID)
 	return err
-}
-
-const fetchPermissionNamesForRole = `-- name: FetchPermissionNamesForRole :many
-SELECT permissions.name
-FROM permissions
-JOIN role_permissions ON permissions.permission_id = role_permissions.permission_id
-WHERE role_permissions.role_id = $1
-`
-
-func (q *Queries) FetchPermissionNamesForRole(ctx context.Context, roleID int32) ([]string, error) {
-	rows, err := q.db.Query(ctx, fetchPermissionNamesForRole, roleID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
-			return nil, err
-		}
-		items = append(items, name)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const getAllCategories = `-- name: GetAllCategories :many
@@ -641,31 +581,6 @@ func (q *Queries) GetAllLogs(ctx context.Context) ([]ForumModerationLog, error) 
 			&i.CommentID,
 			&i.Reason,
 		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getAllPermissions = `-- name: GetAllPermissions :many
-SELECT permission_id, name, description FROM permissions
-`
-
-// Get all permissions
-func (q *Queries) GetAllPermissions(ctx context.Context) ([]Permission, error) {
-	rows, err := q.db.Query(ctx, getAllPermissions)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Permission
-	for rows.Next() {
-		var i Permission
-		if err := rows.Scan(&i.PermissionID, &i.Name, &i.Description); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -1512,18 +1427,6 @@ func (q *Queries) GetLogsByReason(ctx context.Context, reason pgtype.Text) ([]Fo
 	return items, nil
 }
 
-const getPermission = `-- name: GetPermission :one
-SELECT permission_id, name, description FROM permissions WHERE permission_id = $1
-`
-
-// Get a permission by id
-func (q *Queries) GetPermission(ctx context.Context, permissionID int32) (Permission, error) {
-	row := q.db.QueryRow(ctx, getPermission, permissionID)
-	var i Permission
-	err := row.Scan(&i.PermissionID, &i.Name, &i.Description)
-	return i, err
-}
-
 const getPost = `-- name: GetPost :one
 SELECT post_id, title, content, creation_date, user_id, is_sticky, is_locked, post_category_id, additional_notes FROM posts WHERE post_id = $1
 `
@@ -1857,24 +1760,6 @@ func (q *Queries) GetRole(ctx context.Context, roleID int32) (Role, error) {
 	return i, err
 }
 
-const getRolePermission = `-- name: GetRolePermission :one
-SELECT role_id, permission_id FROM role_permissions
-WHERE role_id = $1 AND permission_id = $2
-`
-
-type GetRolePermissionParams struct {
-	RoleID       int32
-	PermissionID int32
-}
-
-// Get a specific role permission
-func (q *Queries) GetRolePermission(ctx context.Context, arg GetRolePermissionParams) (RolePermission, error) {
-	row := q.db.QueryRow(ctx, getRolePermission, arg.RoleID, arg.PermissionID)
-	var i RolePermission
-	err := row.Scan(&i.RoleID, &i.PermissionID)
-	return i, err
-}
-
 const getRouteByID = `-- name: GetRouteByID :one
 SELECT route_id, name, description, start_location, end_location, distance, elevation_gain, route_map_link, user_id FROM routes WHERE route_id = $1
 `
@@ -2205,6 +2090,42 @@ func (q *Queries) GetUserSession(ctx context.Context, sessionID pgtype.UUID) (Us
 	return i, err
 }
 
+const getUserSessionAndRoleName = `-- name: GetUserSessionAndRoleName :one
+SELECT user_sessions.session_id, user_sessions.user_id, user_sessions.expiry_date, user_sessions.ip_address, user_sessions.user_agent, user_sessions.creation_date, users.role_id, roles.role_name
+FROM user_sessions
+INNER JOIN users ON user_sessions.user_id = users.user_id
+INNER JOIN roles ON users.role_id = roles.role_id
+WHERE session_id = $1
+`
+
+type GetUserSessionAndRoleNameRow struct {
+	SessionID    pgtype.UUID
+	UserID       pgtype.Int4
+	ExpiryDate   pgtype.Timestamptz
+	IpAddress    *netip.Addr
+	UserAgent    pgtype.Text
+	CreationDate pgtype.Timestamptz
+	RoleID       pgtype.Int4
+	RoleName     string
+}
+
+// Get a single user session by session_id, with role_name
+func (q *Queries) GetUserSessionAndRoleName(ctx context.Context, sessionID pgtype.UUID) (GetUserSessionAndRoleNameRow, error) {
+	row := q.db.QueryRow(ctx, getUserSessionAndRoleName, sessionID)
+	var i GetUserSessionAndRoleNameRow
+	err := row.Scan(
+		&i.SessionID,
+		&i.UserID,
+		&i.ExpiryDate,
+		&i.IpAddress,
+		&i.UserAgent,
+		&i.CreationDate,
+		&i.RoleID,
+		&i.RoleName,
+	)
+	return i, err
+}
+
 const getUserSessionsByDate = `-- name: GetUserSessionsByDate :many
 SELECT session_id, user_id, creation_date, expiry_date, ip_address, user_agent FROM user_sessions WHERE DATE(creation_date) = $1
 `
@@ -2365,29 +2286,53 @@ func (q *Queries) GetUserSessionsOrderedByDate(ctx context.Context) ([]UserSessi
 	return items, nil
 }
 
-const listRolePermissions = `-- name: ListRolePermissions :many
-SELECT role_id, permission_id FROM role_permissions
+const getUserWithRoleName = `-- name: GetUserWithRoleName :one
+SELECT users.user_id, users.username, users.email, users.registration_date, users.profile_picture, users.biography, users.last_login_date, users.is_active, users.role_id, roles.role_name
+FROM users
+INNER JOIN roles ON users.role_id = roles.role_id
+WHERE users.user_id = $1
 `
 
-// Get all role permissions
-func (q *Queries) ListRolePermissions(ctx context.Context) ([]RolePermission, error) {
-	rows, err := q.db.Query(ctx, listRolePermissions)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []RolePermission
-	for rows.Next() {
-		var i RolePermission
-		if err := rows.Scan(&i.RoleID, &i.PermissionID); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+type GetUserWithRoleNameRow struct {
+	UserID           int32
+	Username         string
+	Email            string
+	RegistrationDate pgtype.Timestamptz
+	ProfilePicture   pgtype.Text
+	Biography        pgtype.Text
+	LastLoginDate    pgtype.Timestamptz
+	IsActive         pgtype.Bool
+	RoleID           pgtype.Int4
+	RoleName         string
+}
+
+// Get a user by id, no password_hash, with role_name
+func (q *Queries) GetUserWithRoleName(ctx context.Context, userID int32) (GetUserWithRoleNameRow, error) {
+	row := q.db.QueryRow(ctx, getUserWithRoleName, userID)
+	var i GetUserWithRoleNameRow
+	err := row.Scan(
+		&i.UserID,
+		&i.Username,
+		&i.Email,
+		&i.RegistrationDate,
+		&i.ProfilePicture,
+		&i.Biography,
+		&i.LastLoginDate,
+		&i.IsActive,
+		&i.RoleID,
+		&i.RoleName,
+	)
+	return i, err
+}
+
+const invalidateUserSession = `-- name: InvalidateUserSession :exec
+UPDATE user_sessions SET expiry_date = TIMESTAMP '1970-01-01 00:00:00' WHERE session_id = $1
+`
+
+// Invalidate a user session by setting the expiry_date to a past date
+func (q *Queries) InvalidateUserSession(ctx context.Context, sessionID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, invalidateUserSession, sessionID)
+	return err
 }
 
 const listRoles = `-- name: ListRoles :many
@@ -2516,6 +2461,30 @@ func (q *Queries) UpdateComment(ctx context.Context, arg UpdateCommentParams) (C
 	return i, err
 }
 
+const updateCommentByCommentIdAndUserId = `-- name: UpdateCommentByCommentIdAndUserId :one
+UPDATE comments SET content = $3 WHERE comment_id = $1 AND user_id = $2 RETURNING comment_id, content, creation_date, post_id, user_id
+`
+
+type UpdateCommentByCommentIdAndUserIdParams struct {
+	CommentID int32
+	UserID    pgtype.Int4
+	Content   string
+}
+
+// Update a comment's content by its ID and the ID of the user who made it
+func (q *Queries) UpdateCommentByCommentIdAndUserId(ctx context.Context, arg UpdateCommentByCommentIdAndUserIdParams) (Comment, error) {
+	row := q.db.QueryRow(ctx, updateCommentByCommentIdAndUserId, arg.CommentID, arg.UserID, arg.Content)
+	var i Comment
+	err := row.Scan(
+		&i.CommentID,
+		&i.Content,
+		&i.CreationDate,
+		&i.PostID,
+		&i.UserID,
+	)
+	return i, err
+}
+
 const updateEvent = `-- name: UpdateEvent :exec
 UPDATE events SET title = $2, description = $3, event_date = $4, meeting_point = $5, route_id = $6, creator_user_id = $7
 WHERE event_id = $1
@@ -2581,22 +2550,6 @@ func (q *Queries) UpdateLog(ctx context.Context, arg UpdateLogParams) error {
 		arg.CommentID,
 		arg.Reason,
 	)
-	return err
-}
-
-const updatePermission = `-- name: UpdatePermission :exec
-UPDATE permissions SET name = $1, description = $2 WHERE permission_id = $3
-`
-
-type UpdatePermissionParams struct {
-	Name         string
-	Description  pgtype.Text
-	PermissionID int32
-}
-
-// Update a permission by id
-func (q *Queries) UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error {
-	_, err := q.db.Exec(ctx, updatePermission, arg.Name, arg.Description, arg.PermissionID)
 	return err
 }
 
@@ -2668,30 +2621,6 @@ type UpdateRoleParams struct {
 // Update a role by id
 func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) error {
 	_, err := q.db.Exec(ctx, updateRole, arg.RoleID, arg.RoleName)
-	return err
-}
-
-const updateRolePermission = `-- name: UpdateRolePermission :exec
-UPDATE role_permissions
-SET role_id = $1, permission_id = $2
-WHERE role_id = $3 AND permission_id = $4
-`
-
-type UpdateRolePermissionParams struct {
-	RoleID         int32
-	PermissionID   int32
-	RoleID_2       int32
-	PermissionID_2 int32
-}
-
-// Update a specific role permission
-func (q *Queries) UpdateRolePermission(ctx context.Context, arg UpdateRolePermissionParams) error {
-	_, err := q.db.Exec(ctx, updateRolePermission,
-		arg.RoleID,
-		arg.PermissionID,
-		arg.RoleID_2,
-		arg.PermissionID_2,
-	)
 	return err
 }
 

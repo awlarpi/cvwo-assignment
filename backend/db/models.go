@@ -59,12 +59,6 @@ type Notification struct {
 	IsRead         pgtype.Bool
 }
 
-type Permission struct {
-	PermissionID int32
-	Name         string
-	Description  pgtype.Text
-}
-
 type Post struct {
 	PostID          int32
 	Title           string
@@ -89,11 +83,6 @@ type PrivateMessage struct {
 type Role struct {
 	RoleID   int32
 	RoleName string
-}
-
-type RolePermission struct {
-	RoleID       int32
-	PermissionID int32
 }
 
 type Route struct {
