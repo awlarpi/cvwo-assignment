@@ -111,8 +111,8 @@ func (h *Handler) UpdateUserExcludingSensitive(c *gin.Context) {
 }
 
 type UpdateUserPasswordAPIParams struct {
-	UserID       int32
-	PasswordHash string
+	UserID   int32
+	Password string
 }
 
 func (h *Handler) UpdateUserPassword(c *gin.Context) {
@@ -127,17 +127,17 @@ func (h *Handler) UpdateUserPassword(c *gin.Context) {
 		return
 	}
 
-	hashedPassword, err := hashPassword(input.PasswordHash)
+	hashedPassword, err := hashPassword(input.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
 
-	input.PasswordHash = hashedPassword
+	input.Password = hashedPassword
 
 	dbInput := db.UpdateUserPasswordParams{
 		UserID:       input.UserID,
-		PasswordHash: input.PasswordHash,
+		PasswordHash: input.Password,
 	}
 
 	err = h.Queries.UpdateUserPassword(context.Background(), dbInput)

@@ -14,3 +14,8 @@ INSERT INTO roles (role_name) VALUES ('Guest');
 
 INSERT INTO users (username, email, password_hash, profile_picture, biography, role_id) 
 VALUES ('testUser', 'testUser@testUser@example.com', '$2a$10$sT4z5AHcw5CqATcCBIklqeSKNnW1XVnaQQ9KBCEdL0Q5DGbJoDnU2', 'https://example.com/profile.jpg', 'This is a test user', 1);
+
+INSERT INTO categories (name, description) VALUES
+('Technology', 'Posts about various technology topics'),
+('Science', 'Posts about various science topics'),
+('Art', 'Posts about various art topics');

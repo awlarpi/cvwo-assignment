@@ -13,12 +13,19 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type LoginInput struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+type Handler struct {
+	Log     *logrus.Logger
+	Dbpool  *pgxpool.Pool
+	Queries *db.Queries
+}
+
+func (h *Handler) Ping(c *gin.Context) {
+	c.String(http.StatusOK, "pong")
 }
 
 func getIPAddress(r *http.Request) (*netip.Addr, error) {
@@ -41,6 +48,11 @@ func hashPassword(password string) (string, error) {
 		return "", err
 	}
 	return string(hashedPassword), nil
+}
+
+type LoginInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 // Login logs the user in by creating a session
@@ -216,4 +228,20 @@ func (h *Handler) EnsureRole(roles ...string) gin.HandlerFunc {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "You are not authorized to perform this action"})
 		c.Abort()
 	}
+}
+
+// validateRoleAndUserID checks if the user is the owner of the resource or an admin
+func (h *Handler) validateUserID(c *gin.Context, userIDToModify int32) bool {
+	userID, ok := c.Get("UserID")
+	if !ok {
+		return false
+	}
+	userIDInt32, ok := userID.(int32)
+	if !ok {
+		return false
+	}
+	if userIDInt32 != userIDToModify {
+		return false
+	}
+	return true
 }
