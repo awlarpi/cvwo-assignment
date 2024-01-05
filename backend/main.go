@@ -6,6 +6,7 @@ import (
 	"server/db"
 	"server/handlers"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -32,6 +33,11 @@ func main() {
 	}
 
 	r := gin.Default()
+
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:8082", "http://localhost:4173"}
+	r.Use(cors.New(config))
+
 	queries := db.New(dbpool)
 
 	h := handlers.Handler{
@@ -48,22 +54,22 @@ func main() {
 
 		users := api.Group("/users")
 		{
-			users.GET("/", h.GetAllUsers)
+			users.GET("", h.GetAllUsers)
 			users.GET("/:id", h.GetUser)
-			users.POST("/", h.CreateUser)
+			users.POST("", h.CreateUser)
 			users.PATCH("/password", h.EnsureRole("User", "Moderator", "Admin"), h.UpdateUserPassword)
-			users.PUT("/", h.EnsureRole("User", "Moderator", "Admin"), h.UpdateUserExcludingSensitive)
+			users.PUT("", h.EnsureRole("User", "Moderator", "Admin"), h.UpdateUserExcludingSensitive)
 			users.DELETE("/:id", h.EnsureRole("User", "Moderator", "Admin"), h.DeleteUser)
 		}
 
 		posts := api.Group("/posts")
 		{
-			posts.GET("/", h.GetPostsHandler)
+			posts.GET("", h.GetPostsHandler)
 			posts.GET("/:id", h.GetPostHandler)
 			posts.GET("/user/:userID", h.GetPostsByUserHandler)
 			posts.GET("/category/:postCategoryID", h.GetPostsByCategoryHandler)
-			posts.POST("/", h.EnsureRole("User", "Moderator", "Admin"), h.CreatePostHandler)
-			posts.PUT("/", h.EnsureRole("User", "Moderator", "Admin"), h.UpdatePostHandler)
+			posts.POST("", h.EnsureRole("User", "Moderator", "Admin"), h.CreatePostHandler)
+			posts.PUT("", h.EnsureRole("User", "Moderator", "Admin"), h.UpdatePostHandler)
 			posts.DELETE("/:id", h.EnsureRole("User", "Moderator", "Admin"), h.DeletePostHandler)
 		}
 
@@ -72,8 +78,8 @@ func main() {
 			comments.GET("/:commentID", h.GetCommentHandler)
 			comments.GET("/post/:postID", h.GetCommentsByPostHandler)
 			comments.GET("/user/:userID", h.GetCommentsByUserHandler)
-			comments.POST("/", h.EnsureRole("User", "Moderator", "Admin"), h.CreateCommentHandler)
-			comments.PUT("/", h.EnsureRole("User", "Moderator", "Admin"), h.UpdateCommentHandler)
+			comments.POST("", h.EnsureRole("User", "Moderator", "Admin"), h.CreateCommentHandler)
+			comments.PUT("", h.EnsureRole("User", "Moderator", "Admin"), h.UpdateCommentHandler)
 			comments.DELETE("/:commentID", h.EnsureRole("User", "Moderator", "Admin"), h.DeleteCommentHandler)
 		}
 
