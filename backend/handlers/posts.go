@@ -18,7 +18,7 @@ func (h *Handler) GetPostsHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Unable to fetch posts"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": posts})
+	c.JSON(http.StatusOK, posts)
 }
 
 // GetPostHandler handles GET requests to fetch a single post
@@ -36,7 +36,7 @@ func (h *Handler) GetPostHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Unable to fetch post"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"result": post})
+	c.JSON(http.StatusOK, post)
 }
 
 // GetPostsByCategoryHandler handles GET requests to get all posts for a specific category
@@ -78,7 +78,6 @@ func (h *Handler) GetPostsByUserHandler(c *gin.Context) {
 type CreatePostApiParams struct {
 	Title           string
 	Content         string
-	UserID          int
 	PostCategoryID  int
 	AdditionalNotes string
 }
@@ -92,15 +91,22 @@ func (h *Handler) CreatePostHandler(c *gin.Context) {
 		return
 	}
 
-	if !h.validateUserID(c, int32(req.UserID)) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized"})
+	userIDInterface, userExists := c.Get("UserID")
+	if !userExists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user ID"})
+		return
+	}
+
+	userID, userOk := userIDInterface.(int32)
+	if !userOk {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user ID"})
 		return
 	}
 
 	err := h.Queries.CreatePost(context.Background(), db.CreatePostParams{
 		Title:           req.Title,
 		Content:         req.Content,
-		UserID:          pgtype.Int4{Int32: int32(req.UserID), Valid: true},
+		UserID:          pgtype.Int4{Int32: userID, Valid: true},
 		PostCategoryID:  pgtype.Int4{Int32: int32(req.PostCategoryID), Valid: true},
 		AdditionalNotes: pgtype.Text{String: req.AdditionalNotes, Valid: true},
 	})
@@ -116,7 +122,6 @@ type UpdatePostApiParams struct {
 	PostID          int
 	Title           string
 	Content         string
-	UserID          int
 	PostCategoryID  int
 	AdditionalNotes string
 }
@@ -130,8 +135,15 @@ func (h *Handler) UpdatePostHandler(c *gin.Context) {
 		return
 	}
 
-	if !h.validateUserID(c, int32(req.UserID)) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized"})
+	userIDInterface, userExists := c.Get("UserID")
+	if !userExists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user ID"})
+		return
+	}
+
+	userID, userOk := userIDInterface.(int32)
+	if !userOk {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user ID"})
 		return
 	}
 
@@ -139,7 +151,7 @@ func (h *Handler) UpdatePostHandler(c *gin.Context) {
 		PostID:          int32(req.PostID),
 		Title:           req.Title,
 		Content:         req.Content,
-		UserID:          pgtype.Int4{Int32: int32(req.UserID), Valid: true},
+		UserID:          pgtype.Int4{Int32: userID, Valid: true},
 		PostCategoryID:  pgtype.Int4{Int32: int32(req.PostCategoryID), Valid: true},
 		AdditionalNotes: pgtype.Text{String: req.AdditionalNotes, Valid: true},
 	})

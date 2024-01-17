@@ -2,11 +2,12 @@ import { useState } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import { useMutation } from "@tanstack/react-query";
-import { instance } from "../../axios";
+import { instance } from "../../lib/axiosinstance";
 import { Box, Container, Stack, Typography } from "@mui/material";
+import { useStore } from "../../lib/store";
+import { Navigate } from "react-router-dom";
 
 async function login(loginParams: { username: string; password: string }) {
-  console.log("login");
   const response = await instance.post("/login", loginParams);
   return response.data;
 }
@@ -14,14 +15,27 @@ async function login(loginParams: { username: string; password: string }) {
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const { logIn, isLoggedIn } = useStore();
 
   const mutation = useMutation({
     mutationFn: login,
   });
 
   const handleLogin = () => {
-    mutation.mutate({ username, password });
+    mutation.mutate(
+      { username, password },
+      {
+        onSuccess: () => {
+          console.log("logged in");
+          logIn();
+        },
+      }
+    );
   };
+
+  if (isLoggedIn) {
+    return <Navigate to="/" replace={true} />;
+  }
 
   return (
     <Container maxWidth="sm">
@@ -31,7 +45,7 @@ export default function LoginPage() {
         alignItems="center"
         justifyContent="center"
         style={{
-          minHeight: "95vh",
+          minHeight: "75vh",
         }}
       >
         <h2 style={{}}>Login</h2>

@@ -36,6 +36,7 @@ func main() {
 
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:8082", "http://localhost:4173"}
+	config.AllowCredentials = true
 	r.Use(cors.New(config))
 
 	queries := db.New(dbpool)

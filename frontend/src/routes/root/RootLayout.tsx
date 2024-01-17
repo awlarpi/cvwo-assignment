@@ -17,6 +17,8 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import { Link, Outlet } from "react-router-dom";
 import { Container } from "@mui/material";
+import { useStore } from "../../lib/store";
+import { instance } from "../../lib/axiosinstance";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -59,6 +61,8 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 function TopBar() {
+  const { isLoggedIn, logOut } = useStore();
+
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
     React.useState<null | HTMLElement>(null);
@@ -83,6 +87,17 @@ function TopBar() {
     setMobileMoreAnchorEl(event.currentTarget);
   };
 
+  async function logout() {
+    const response = await instance.post("/logout");
+
+    if (response.status === 200) {
+      console.log("logged out");
+      logOut();
+    } else {
+      console.log("Error logging out");
+    }
+  }
+
   const menuId = "primary-search-account-menu";
   const renderMenu = (
     <Menu
@@ -100,9 +115,13 @@ function TopBar() {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-      <MenuItem onClick={handleMenuClose} component={Link} to="/login">
-        Login
-      </MenuItem>
+      {isLoggedIn ? (
+        <MenuItem onClick={logout}>Logout</MenuItem>
+      ) : (
+        <MenuItem onClick={handleMenuClose} component={Link} to="/login">
+          Login
+        </MenuItem>
+      )}
       <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
       <MenuItem onClick={handleMenuClose}>My account</MenuItem>
     </Menu>
@@ -196,13 +215,32 @@ function TopBar() {
             />
           </Search>
           <Box sx={{ flexGrow: 1 }} />
-          <Box sx={{ display: { xs: "none", md: "flex" } }}>
+          <Box
+            sx={{
+              display: { xs: "none", md: "flex" },
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography
+              noWrap
+              component={Link}
+              to="/posts"
+              sx={{
+                display: { xs: "none", sm: "block" },
+                textDecoration: "none",
+                color: "inherit",
+                marginX: "1rem",
+              }}
+            >
+              Posts
+            </Typography>
             <IconButton
               size="large"
               aria-label="show 4 new mails"
               color="inherit"
             >
-              <Badge badgeContent={4} color="error">
+              <Badge badgeContent={0} color="error">
                 <MailIcon />
               </Badge>
             </IconButton>
@@ -211,7 +249,7 @@ function TopBar() {
               aria-label="show 17 new notifications"
               color="inherit"
             >
-              <Badge badgeContent={17} color="error">
+              <Badge badgeContent={0} color="error">
                 <NotificationsIcon />
               </Badge>
             </IconButton>
@@ -224,7 +262,9 @@ function TopBar() {
               onClick={handleProfileMenuOpen}
               color="inherit"
             >
-              <AccountCircle />
+              <AccountCircle
+                style={{ color: isLoggedIn ? "turquoise" : "pink" }}
+              />
             </IconButton>
           </Box>
           <Box sx={{ display: { xs: "flex", md: "none" } }}>
@@ -251,7 +291,13 @@ export default function RootLayout() {
   return (
     <Box>
       <TopBar />
-      <Container maxWidth="xl">
+      <Container
+        maxWidth="xl"
+        sx={{
+          paddingTop: "1rem",
+          paddingBottom: "1rem",
+        }}
+      >
         <Outlet />
       </Container>
     </Box>

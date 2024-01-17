@@ -169,6 +169,7 @@ func (h *Handler) Logout(c *gin.Context) {
 func (h *Handler) InjectRoleNameAndUserID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sessionID, err := c.Cookie("session_id")
+		// log.Println("sessionID:", sessionID)
 		if err != nil {
 			c.Set("RoleName", "Guest")
 			c.Set("Error", fmt.Errorf("no session cookie found"))
@@ -202,6 +203,9 @@ func (h *Handler) InjectRoleNameAndUserID() gin.HandlerFunc {
 			return
 		}
 
+		// log.Println("role name:", userSession.RoleName)
+		// log.Println("user ID:", userSession.UserID.Int32)
+
 		c.Set("RoleName", userSession.RoleName)   // type string
 		c.Set("UserID", userSession.UserID.Int32) // type int32
 		c.Next()
@@ -212,6 +216,9 @@ func (h *Handler) InjectRoleNameAndUserID() gin.HandlerFunc {
 func (h *Handler) EnsureRole(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userRole := c.GetString("RoleName")
+
+		// log.Println("userRole:", userRole)
+
 		if userRole == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "You are not authorized to perform this action"})
 			c.Abort()

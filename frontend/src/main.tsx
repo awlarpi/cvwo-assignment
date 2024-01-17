@@ -5,19 +5,20 @@ import Root from "./routes/root/RootLayout.tsx";
 import HomePage from "./routes/HomePage.tsx";
 import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import PostsPage from "./routes/posts/PostsPage.tsx";
+import PostsPage from "./routes/posts/ForumPage.tsx";
 import LoginPage from "./routes/login/LoginPage.tsx";
+import PostPage from "./routes/posts/PostPage.tsx";
 
 const theme = createTheme({
   palette: {
     mode: "dark",
-    background: {
-      default: "#171B26",
-    },
+    // background: {
+    //   default: "#171B26",
+    // },
   },
 });
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   {
@@ -29,14 +30,18 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
+        path: "login",
+        element: <LoginPage />,
+      },
+      {
         path: "posts",
         element: <PostsPage />,
       },
+      {
+        path: "posts/:postId",
+        element: <PostPage />,
+      },
     ],
-  },
-  {
-    path: "/login",
-    element: <LoginPage />,
   },
 ]);
 

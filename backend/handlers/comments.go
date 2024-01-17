@@ -13,7 +13,6 @@ import (
 type CreateCommentApiParams struct {
 	Content string
 	PostID  int
-	UserID  int
 }
 
 // CreateCommentHandler handles POST requests to create a new comment
@@ -25,15 +24,22 @@ func (h *Handler) CreateCommentHandler(c *gin.Context) {
 		return
 	}
 
-	if !h.validateUserID(c, int32(req.UserID)) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized"})
+	userIDInterface, userExists := c.Get("UserID")
+	if !userExists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user ID"})
+		return
+	}
+
+	userID, userOk := userIDInterface.(int32)
+	if !userOk {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user ID"})
 		return
 	}
 
 	comment, err := h.Queries.CreateComment(context.Background(), db.CreateCommentParams{
 		Content: req.Content,
 		PostID:  pgtype.Int4{Int32: int32(req.PostID), Valid: true},
-		UserID:  pgtype.Int4{Int32: int32(req.UserID), Valid: true},
+		UserID:  pgtype.Int4{Int32: userID, Valid: true},
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create comment"})
