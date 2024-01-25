@@ -9,9 +9,11 @@ export default function ForumPage() {
   return (
     <Container maxWidth="lg">
       <Stack spacing="1rem">
-        <Typography variant="h5" component="h2" marginBottom="1rem">
-          Create a post
-        </Typography>
+        {isLoggedIn && (
+          <Typography variant="h5" component="h2" marginBottom="1rem">
+            Create a post
+          </Typography>
+        )}
         {isLoggedIn && <CreatePostForm />}
         <Divider />
         <PostCards />
