@@ -1,8 +1,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+interface IStore {
+  isLoggedIn: boolean;
+  logIn: () => void;
+  logOut: () => void;
+}
+
 export const useStore = create(
-  persist(
+  persist<IStore>(
     (set) => ({
       isLoggedIn: false,
       logIn: () => set({ isLoggedIn: true }),

@@ -1,7 +1,7 @@
-INSERT INTO roles (role_name) VALUES ('Admin');
-INSERT INTO roles (role_name) VALUES ('Moderator');
-INSERT INTO roles (role_name) VALUES ('User');
-INSERT INTO roles (role_name) VALUES ('Guest');
+INSERT INTO roles (role_id, role_name) VALUES (1, 'Admin');
+INSERT INTO roles (role_id, role_name) VALUES (2, 'Moderator');
+INSERT INTO roles (role_id, role_name) VALUES (3, 'User');
+INSERT INTO roles (role_id, role_name) VALUES (4, 'Guest');
 
 -- {
 --     "Username": "testUser",

@@ -16,9 +16,18 @@ import MailIcon from "@mui/icons-material/Mail";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import { Link, Outlet } from "react-router-dom";
-import { Container } from "@mui/material";
+import {
+  Button,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 import { useStore } from "../../lib/store";
 import { instance } from "../../lib/axiosinstance";
+import { useState } from "react";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -62,6 +71,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 
 function TopBar() {
   const { isLoggedIn, logOut } = useStore();
+  const [openLogoutModal, setOpenLogoutModal] = useState(false);
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
@@ -88,13 +98,11 @@ function TopBar() {
   };
 
   async function logout() {
-    const response = await instance.post("/logout");
-
-    if (response.status === 200) {
-      console.log("logged out");
+    try {
+      await instance.post("/logout");
+    } finally {
       logOut();
-    } else {
-      console.log("Error logging out");
+      setOpenLogoutModal(true);
     }
   }
 
@@ -225,15 +233,16 @@ function TopBar() {
             <Typography
               noWrap
               component={Link}
-              to="/posts"
+              to="/"
               sx={{
                 display: { xs: "none", sm: "block" },
-                textDecoration: "none",
+                textDecoration: "underline",
                 color: "inherit",
                 marginX: "1rem",
+                textUnderlineOffset: "0.2rem",
               }}
             >
-              Posts
+              Browse Forum
             </Typography>
             <IconButton
               size="large"
@@ -263,7 +272,7 @@ function TopBar() {
               color="inherit"
             >
               <AccountCircle
-                style={{ color: isLoggedIn ? "turquoise" : "pink" }}
+                style={{ color: isLoggedIn ? "lightgreen" : "pink" }}
               />
             </IconButton>
           </Box>
@@ -283,6 +292,20 @@ function TopBar() {
       </AppBar>
       {renderMobileMenu}
       {renderMenu}
+      <Dialog open={openLogoutModal} onClose={() => setOpenLogoutModal(false)}>
+        <DialogTitle>You have been logged out</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You have been successfully logged out. Please close this dialog to
+            continue.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenLogoutModal(false)} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

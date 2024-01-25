@@ -107,7 +107,7 @@ func (h *Handler) CreatePostHandler(c *gin.Context) {
 		Title:           req.Title,
 		Content:         req.Content,
 		UserID:          pgtype.Int4{Int32: userID, Valid: true},
-		PostCategoryID:  pgtype.Int4{Int32: int32(req.PostCategoryID), Valid: true},
+		PostCategoryID:  pgtype.Int4{Int32: int32(1), Valid: true},
 		AdditionalNotes: pgtype.Text{String: req.AdditionalNotes, Valid: true},
 	})
 	if err != nil {

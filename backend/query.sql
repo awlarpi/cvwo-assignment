@@ -109,7 +109,10 @@ VALUES ($1, $2, $3, $4, $5);
 SELECT * FROM posts WHERE post_id = $1;
 
 -- name: GetAllPosts :many
-SELECT * FROM posts ORDER BY creation_date DESC;
+SELECT posts.*, users.username 
+FROM posts 
+INNER JOIN users ON posts.user_id = users.user_id 
+ORDER BY posts.creation_date DESC;
 
 -- name: GetPostsByUser :many
 SELECT * FROM posts WHERE user_id = $1 ORDER BY creation_date DESC;
@@ -159,7 +162,11 @@ SELECT * FROM comments ORDER BY creation_date DESC;
 
 -- name: GetCommentsByPost :many
 -- Get all comments for a specific post, ordered by creation date
-SELECT * FROM comments WHERE post_id = $1 ORDER BY creation_date DESC;
+SELECT comments.*, users.username 
+FROM comments 
+INNER JOIN users ON comments.user_id = users.user_id 
+WHERE post_id = $1 
+ORDER BY comments.creation_date DESC;
 
 -- name: GetCommentsByUser :many
 -- Get all comments made by a specific user, ordered by creation date

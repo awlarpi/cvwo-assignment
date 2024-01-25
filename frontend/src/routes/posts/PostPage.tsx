@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { Container, Divider, Stack } from "@mui/material";
-import CommentForm from "../../components/CommentForm";
+import CommentForm from "../../components/CreateCommentForm";
 import PostContentCard from "../../components/PostContentCard";
 import CommentCards from "../../components/CommentCards";
 

@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { instance } from "../../lib/axiosinstance";
 import { Box, Container, Stack, Typography } from "@mui/material";
 import { useStore } from "../../lib/store";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 
 async function login(loginParams: { username: string; password: string }) {
   const response = await instance.post("/login", loginParams);
@@ -26,7 +26,6 @@ export default function LoginPage() {
       { username, password },
       {
         onSuccess: () => {
-          console.log("logged in");
           logIn();
         },
       }
@@ -75,6 +74,15 @@ export default function LoginPage() {
             style={{ height: "3rem" }}
           >
             Login
+          </Button>
+          <Button
+            component={Link}
+            to="/signup"
+            variant="outlined"
+            style={{ height: "3rem" }}
+            color="secondary"
+          >
+            Signup
           </Button>
         </Stack>
       </Box>

@@ -6,6 +6,8 @@ import {
   Typography,
   Stack,
   IconButton,
+  Divider,
+  Box,
 } from "@mui/material";
 import { queryClient } from "../main";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -59,13 +61,13 @@ export default function CommentCards({ postId }: { postId: string }) {
         <Card key={comment.CommentID} sx={{}}>
           <CardContent
             sx={{
-              paddingY: "1rem",
+              paddingY: "0.5rem",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
             }}
           >
-            <Typography variant="body2" color="textSecondary" component="p">
+            <Typography variant="body1" color="textSecondary" component="p">
               {comment.Content}
             </Typography>
             <IconButton
@@ -81,6 +83,17 @@ export default function CommentCards({ postId }: { postId: string }) {
               <DeleteIcon />
             </IconButton>
           </CardContent>
+          <Divider />
+          <Box marginX="1rem" marginY="0.5rem">
+            <Stack direction="row" spacing="1.5rem">
+              <Typography variant="body2" color="text.secondary">
+                User: {comment.UserID}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Date: {new Date(comment.CreationDate).toLocaleDateString()}
+              </Typography>
+            </Stack>
+          </Box>
         </Card>
       ))}
     </Stack>

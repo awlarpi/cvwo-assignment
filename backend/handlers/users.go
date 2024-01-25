@@ -16,10 +16,8 @@ type CreateUserAPIInput struct {
 	Password       string
 	ProfilePicture string
 	Biography      string
-	RoleID         int
 }
 
-// TODO: RoleID should not be set by the user
 func (h *Handler) CreateUser(c *gin.Context) {
 	var inputAPI CreateUserAPIInput
 	if err := c.ShouldBindJSON(&inputAPI); err != nil {
@@ -39,7 +37,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		PasswordHash:   hashedPassword,
 		ProfilePicture: pgtype.Text{String: inputAPI.ProfilePicture, Valid: true},
 		Biography:      pgtype.Text{String: inputAPI.Biography, Valid: true},
-		RoleID:         pgtype.Int4{Int32: int32(inputAPI.RoleID), Valid: true},
+		RoleID:         pgtype.Int4{Int32: 3, Valid: true}, // RoleID set directly here to be guest
 	}
 
 	err = h.Queries.CreateUser(context.Background(), inputDB)
