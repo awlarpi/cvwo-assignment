@@ -24,6 +24,7 @@ export type Post = {
   IsLocked: boolean;
   PostCategoryID: number;
   AdditionalNotes: string | null;
+  Username: string;
 };
 
 async function getAllPosts() {
@@ -83,12 +84,13 @@ export default function PostCards() {
             marginY="0.5rem"
             marginX="0.75rem"
           >
-            <Stack direction="row" spacing="1.5rem">
+            <Stack direction="row" spacing="0.5rem">
               <Typography variant="body2" color="text.secondary">
-                User: {post.UserID}
+                username: {post.Username}
               </Typography>
+              <Divider orientation="vertical" flexItem />
               <Typography variant="body2" color="text.secondary">
-                Date: {new Date(post.CreationDate).toLocaleDateString()}
+                date: {new Date(post.CreationDate).toLocaleString()}
               </Typography>
             </Stack>
             <IconButton

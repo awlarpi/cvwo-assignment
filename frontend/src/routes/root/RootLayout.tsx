@@ -130,8 +130,8 @@ function TopBar() {
           Login
         </MenuItem>
       )}
-      <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-      <MenuItem onClick={handleMenuClose}>My account</MenuItem>
+      {/* <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
+      <MenuItem onClick={handleMenuClose}>My account</MenuItem> */}
     </Menu>
   );
 
@@ -238,13 +238,13 @@ function TopBar() {
                 display: { xs: "none", sm: "block" },
                 textDecoration: "underline",
                 color: "inherit",
-                marginX: "1rem",
+                marginX: "0.75rem",
                 textUnderlineOffset: "0.2rem",
               }}
             >
               Browse Forum
             </Typography>
-            <IconButton
+            {/* <IconButton
               size="large"
               aria-label="show 4 new mails"
               color="inherit"
@@ -261,7 +261,7 @@ function TopBar() {
               <Badge badgeContent={0} color="error">
                 <NotificationsIcon />
               </Badge>
-            </IconButton>
+            </IconButton> */}
             <IconButton
               size="large"
               edge="end"

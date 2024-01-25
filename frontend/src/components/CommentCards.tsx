@@ -18,6 +18,7 @@ interface Comment {
   CreationDate: string;
   PostID: number;
   UserID: number;
+  Username: string;
 }
 
 export default function CommentCards({ postId }: { postId: string }) {
@@ -85,12 +86,13 @@ export default function CommentCards({ postId }: { postId: string }) {
           </CardContent>
           <Divider />
           <Box marginX="1rem" marginY="0.5rem">
-            <Stack direction="row" spacing="1.5rem">
+            <Stack direction="row" spacing="1rem">
               <Typography variant="body2" color="text.secondary">
-                User: {comment.UserID}
+                username: {comment.Username}
               </Typography>
+              <Divider orientation="vertical" flexItem />
               <Typography variant="body2" color="text.secondary">
-                Date: {new Date(comment.CreationDate).toLocaleDateString()}
+                date: {new Date(comment.CreationDate).toLocaleDateString()}
               </Typography>
             </Stack>
           </Box>
