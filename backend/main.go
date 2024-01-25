@@ -35,7 +35,7 @@ func main() {
 	r := gin.Default()
 
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:8082", "http://localhost:4173"}
+	config.AllowOrigins = []string{"http://localhost:8082", "http://localhost:4173", "https://cvwo-spa.onrender.com"}
 	config.AllowCredentials = true
 	r.Use(cors.New(config))
 
