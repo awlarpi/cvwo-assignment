@@ -1,8 +1,8 @@
 Some Docker commands:
-docker compose down
-docker compose build
-docker compose up -d
-docker compose up -d --build backend
+- docker compose down
+- docker compose build
+- docker compose up -d
+- docker compose up -d --build backend
 
 ERO:
 **Entities:**
