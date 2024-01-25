@@ -1,7 +1,7 @@
 import { QueryFunctionContext, useQuery } from "@tanstack/react-query";
 import { instance } from "../lib/axiosinstance";
-import { Post } from "../routes/posts/ForumPage";
 import { Card, CardContent, Typography } from "@mui/material";
+import { Post } from "./PostCards";
 
 async function getPostByPostId({ queryKey }: QueryFunctionContext) {
   const [, postId] = queryKey;
