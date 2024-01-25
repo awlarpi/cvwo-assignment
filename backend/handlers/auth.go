@@ -97,7 +97,7 @@ func (h *Handler) Login(c *gin.Context) {
 	createSessionParams := db.CreateUserSessionParams{
 		SessionID:  pgtype.UUID{Bytes: sessionID16Bytes, Valid: true},
 		UserID:     pgtype.Int4{Int32: user.UserID, Valid: true},
-		ExpiryDate: pgtype.Timestamptz{Time: time.Now().Add(24 * time.Hour), Valid: true},
+		ExpiryDate: pgtype.Timestamptz{Time: time.Now().Add(8760 * time.Hour), Valid: true},
 		IpAddress:  parsedIpAddress,
 		UserAgent:  pgtype.Text{String: c.Request.UserAgent(), Valid: true},
 	}

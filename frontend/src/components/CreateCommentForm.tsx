@@ -60,7 +60,7 @@ export default function CommentForm({ postId }: { postId: string }) {
             fullWidth
             variant="standard"
             error={error !== ""}
-            helperText={error}
+            helperText={error + " - Please check that you are logged in"}
             sx={{ borderColor: "primary.main" }}
           />
         </CardContent>
