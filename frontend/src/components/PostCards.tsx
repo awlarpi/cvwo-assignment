@@ -13,6 +13,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { instance } from "../lib/axiosinstance";
 import { queryClient } from "../main";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { useStore } from "../lib/store";
 
 export type Post = {
   PostID: number;
@@ -33,6 +34,8 @@ async function getAllPosts() {
 }
 
 export default function PostCards() {
+  const { userId, isLoggedIn } = useStore();
+
   const { isLoading, data, isError, error } = useQuery({
     queryKey: ["posts"],
     queryFn: getAllPosts,
@@ -93,18 +96,20 @@ export default function PostCards() {
                 date: {new Date(post.CreationDate).toLocaleString()}
               </Typography>
             </Stack>
-            <IconButton
-              color="secondary"
-              sx={{
-                border: "1px solid",
-                borderColor: "currentColor",
-                borderRadius: "10%",
-              }}
-              size="small"
-              onClick={() => deletePostMutation.mutate(post.PostID)}
-            >
-              <DeleteIcon />
-            </IconButton>
+            {isLoggedIn && userId === post.UserID ? (
+              <IconButton
+                color="secondary"
+                sx={{
+                  border: "1px solid",
+                  borderColor: "currentColor",
+                  borderRadius: "10%",
+                }}
+                size="small"
+                onClick={() => deletePostMutation.mutate(post.PostID)}
+              >
+                <DeleteIcon />
+              </IconButton>
+            ) : null}
           </Box>
         </Card>
       ))}

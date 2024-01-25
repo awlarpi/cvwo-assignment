@@ -24,7 +24,7 @@ export default function LoginPage() {
       { username, password },
       {
         onSuccess: (data) => {
-          logIn(data.session_id);
+          logIn(data.session_id, data.user_id);
         },
       }
     );

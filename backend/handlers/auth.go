@@ -117,7 +117,7 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Logged in!", "session_id": sessionID.String()})
+	c.JSON(http.StatusOK, gin.H{"message": "Logged in!", "session_id": sessionID.String(), "user_id": user.UserID})
 }
 
 // Logout logs the user out by invalidating the session

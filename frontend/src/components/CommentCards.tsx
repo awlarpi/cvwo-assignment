@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { queryClient } from "../main";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { useStore } from "../lib/store";
 
 interface Comment {
   CommentID: number;
@@ -22,6 +23,8 @@ interface Comment {
 }
 
 export default function CommentCards({ postId }: { postId: string }) {
+  const { userId, isLoggedIn } = useStore();
+
   const { isLoading, data, isError, error } = useQuery({
     queryKey: ["post", postId, "comments"],
     queryFn: async () => {
@@ -71,18 +74,20 @@ export default function CommentCards({ postId }: { postId: string }) {
             <Typography variant="body1" color="textSecondary" component="p">
               {comment.Content}
             </Typography>
-            <IconButton
-              color="secondary"
-              sx={{
-                border: "1px solid",
-                borderColor: "currentColor",
-                borderRadius: "10%",
-              }}
-              size="small"
-              onClick={() => deleteCommentMutation.mutate(comment.CommentID)}
-            >
-              <DeleteIcon />
-            </IconButton>
+            {isLoggedIn && userId === comment.UserID ? (
+              <IconButton
+                color="secondary"
+                sx={{
+                  border: "1px solid",
+                  borderColor: "currentColor",
+                  borderRadius: "10%",
+                }}
+                size="small"
+                onClick={() => deleteCommentMutation.mutate(comment.CommentID)}
+              >
+                <DeleteIcon />
+              </IconButton>
+            ) : null}
           </CardContent>
           <Divider />
           <Box marginX="1rem" marginY="0.5rem">
