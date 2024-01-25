@@ -29,7 +29,9 @@ func (h *Handler) Ping(c *gin.Context) {
 }
 
 func getIPAddress(r *http.Request) (*netip.Addr, error) {
-	ip := r.Header.Get("X-Forwarded-For")
+	// ip := r.Header.Get("X-Forwarded-For")
+
+	ip := "192.168.1.1" // TODO: this is dummy ip address. to remove this line when the ip address bug is fixed
 	if ip == "" {
 		ip, _, _ = net.SplitHostPort(r.RemoteAddr)
 	}
