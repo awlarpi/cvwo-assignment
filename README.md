@@ -1,17 +1,8 @@
-Plan the use cases for the blog website
-Plan the Entity Relationship Model
-Write the SQL schema and Queries
-Use SQLC to generate the route handlers
-Handle user authentication
-Create the frontend with MUI
-Write end-to-end tests
-Deploy to AWS ECS
-
 Some Docker commands:
-docker compose down
-docker compose build
-docker compose up -d
-docker compose up -d --build backend
+- docker compose down
+- docker compose build
+- docker compose up -d
+- docker compose up -d --build backend
 
 ERO:
 **Entities:**
