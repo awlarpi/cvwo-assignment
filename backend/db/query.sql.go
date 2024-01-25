@@ -592,18 +592,34 @@ func (q *Queries) GetAllLogs(ctx context.Context) ([]ForumModerationLog, error) 
 }
 
 const getAllPosts = `-- name: GetAllPosts :many
-SELECT post_id, title, content, creation_date, user_id, is_sticky, is_locked, post_category_id, additional_notes FROM posts ORDER BY creation_date DESC
+SELECT posts.post_id, posts.title, posts.content, posts.creation_date, posts.user_id, posts.is_sticky, posts.is_locked, posts.post_category_id, posts.additional_notes, users.username 
+FROM posts 
+INNER JOIN users ON posts.user_id = users.user_id 
+ORDER BY posts.creation_date DESC
 `
 
-func (q *Queries) GetAllPosts(ctx context.Context) ([]Post, error) {
+type GetAllPostsRow struct {
+	PostID          int32
+	Title           string
+	Content         string
+	CreationDate    pgtype.Timestamptz
+	UserID          pgtype.Int4
+	IsSticky        pgtype.Bool
+	IsLocked        pgtype.Bool
+	PostCategoryID  pgtype.Int4
+	AdditionalNotes pgtype.Text
+	Username        string
+}
+
+func (q *Queries) GetAllPosts(ctx context.Context) ([]GetAllPostsRow, error) {
 	rows, err := q.db.Query(ctx, getAllPosts)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Post
+	var items []GetAllPostsRow
 	for rows.Next() {
-		var i Post
+		var i GetAllPostsRow
 		if err := rows.Scan(
 			&i.PostID,
 			&i.Title,
@@ -614,6 +630,7 @@ func (q *Queries) GetAllPosts(ctx context.Context) ([]Post, error) {
 			&i.IsLocked,
 			&i.PostCategoryID,
 			&i.AdditionalNotes,
+			&i.Username,
 		); err != nil {
 			return nil, err
 		}
@@ -799,25 +816,39 @@ func (q *Queries) GetComment(ctx context.Context, commentID int32) (Comment, err
 }
 
 const getCommentsByPost = `-- name: GetCommentsByPost :many
-SELECT comment_id, content, creation_date, post_id, user_id FROM comments WHERE post_id = $1 ORDER BY creation_date DESC
+SELECT comments.comment_id, comments.content, comments.creation_date, comments.post_id, comments.user_id, users.username 
+FROM comments 
+INNER JOIN users ON comments.user_id = users.user_id 
+WHERE post_id = $1 
+ORDER BY comments.creation_date DESC
 `
 
+type GetCommentsByPostRow struct {
+	CommentID    int32
+	Content      string
+	CreationDate pgtype.Timestamptz
+	PostID       pgtype.Int4
+	UserID       pgtype.Int4
+	Username     string
+}
+
 // Get all comments for a specific post, ordered by creation date
-func (q *Queries) GetCommentsByPost(ctx context.Context, postID pgtype.Int4) ([]Comment, error) {
+func (q *Queries) GetCommentsByPost(ctx context.Context, postID pgtype.Int4) ([]GetCommentsByPostRow, error) {
 	rows, err := q.db.Query(ctx, getCommentsByPost, postID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Comment
+	var items []GetCommentsByPostRow
 	for rows.Next() {
-		var i Comment
+		var i GetCommentsByPostRow
 		if err := rows.Scan(
 			&i.CommentID,
 			&i.Content,
 			&i.CreationDate,
 			&i.PostID,
 			&i.UserID,
+			&i.Username,
 		); err != nil {
 			return nil, err
 		}
