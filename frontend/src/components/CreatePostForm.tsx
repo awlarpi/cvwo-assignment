@@ -66,7 +66,11 @@ export default function CreatePostForm() {
               fullWidth
               variant="standard"
               error={error !== ""}
-              helperText={error + " - Please check that you are logged in"}
+              helperText={
+                error + error !== ""
+                  ? " - Please check that you are logged in"
+                  : ""
+              }
               sx={{ borderColor: "primary.main" }}
             />
             <TextField
@@ -77,7 +81,11 @@ export default function CreatePostForm() {
               fullWidth
               variant="standard"
               error={error !== ""}
-              helperText={error + " - Please check that you are logged in"}
+              helperText={
+                error + error !== ""
+                  ? " - Please check that you are logged in"
+                  : ""
+              }
               sx={{ borderColor: "primary.main" }}
             />
           </Stack>
