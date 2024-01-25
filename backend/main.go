@@ -37,6 +37,7 @@ func main() {
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:8082", "http://localhost:4173", "https://cvwo-spa.onrender.com"}
 	config.AllowCredentials = true
+	config.AllowHeaders = append(config.AllowHeaders, "session_id")
 	r.Use(cors.New(config))
 
 	queries := db.New(dbpool)

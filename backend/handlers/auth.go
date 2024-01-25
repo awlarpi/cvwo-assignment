@@ -110,14 +110,6 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     "session_id",
-		Value:    sessionID.String(),
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/",
-	})
-
 	// update last login date
 	err = h.Queries.UpdateLastLogin(context.Background(), user.UserID)
 	if err != nil {
@@ -125,7 +117,7 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Logged in!"})
+	c.JSON(http.StatusOK, gin.H{"message": "Logged in!", "session_id": sessionID.String()})
 }
 
 // Logout logs the user out by invalidating the session
@@ -170,11 +162,10 @@ func (h *Handler) Logout(c *gin.Context) {
 // InjectRoleNameAndUserID is a middleware that injects the user's role name and user ID into the context
 func (h *Handler) InjectRoleNameAndUserID() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		sessionID, err := c.Cookie("session_id")
-		// log.Println("sessionID:", sessionID)
-		if err != nil {
+		sessionID := c.GetHeader("session_id")
+		if sessionID == "" {
 			c.Set("RoleName", "Guest")
-			c.Set("Error", fmt.Errorf("no session cookie found"))
+			c.Set("Error", fmt.Errorf("no session header found"))
 			c.Next()
 			return
 		}
@@ -218,8 +209,6 @@ func (h *Handler) InjectRoleNameAndUserID() gin.HandlerFunc {
 func (h *Handler) EnsureRole(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userRole := c.GetString("RoleName")
-
-		// log.Println("userRole:", userRole)
 
 		if userRole == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "You are not authorized to perform this action"})

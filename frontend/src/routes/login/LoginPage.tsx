@@ -7,26 +7,24 @@ import { Box, Container, Stack, Typography } from "@mui/material";
 import { useStore } from "../../lib/store";
 import { Link, Navigate } from "react-router-dom";
 
-async function login(loginParams: { username: string; password: string }) {
-  const response = await instance.post("/login", loginParams);
-  return response.data;
-}
-
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { logIn, isLoggedIn } = useStore();
 
   const mutation = useMutation({
-    mutationFn: login,
+    mutationFn: async (loginParams: { username: string; password: string }) => {
+      const response = await instance.post("/login", loginParams);
+      return response.data;
+    },
   });
 
   const handleLogin = () => {
     mutation.mutate(
       { username, password },
       {
-        onSuccess: () => {
-          logIn();
+        onSuccess: (data) => {
+          logIn(data.session_id);
         },
       }
     );

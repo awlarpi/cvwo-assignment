@@ -92,7 +92,7 @@ export default function CommentCards({ postId }: { postId: string }) {
               </Typography>
               <Divider orientation="vertical" flexItem />
               <Typography variant="body2" color="text.secondary">
-                date: {new Date(comment.CreationDate).toLocaleDateString()}
+                date: {new Date(comment.CreationDate).toLocaleString()}
               </Typography>
             </Stack>
           </Box>
